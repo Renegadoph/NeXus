@@ -1,0 +1,2726 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus Mobile System</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
+
+  :root {
+    --bg: #0a0a0a;
+    --glass: rgba(255,255,255,0.06);
+    --glass2: rgba(255,255,255,0.12);
+    --border: rgba(255,255,255,0.12);
+    --accent: #007AFF;
+    --green: #30D158;
+    --red: #FF3B30;
+    --yellow: #FFD60A;
+    --pink: #FF2D55;
+    --purple: #BF5AF2;
+    --orange: #FF9F0A;
+    --teal: #5AC8FA;
+    --white: #FFFFFF;
+    --gray1: #8E8E93;
+    --gray2: #3A3A3C;
+    --gray3: #2C2C2E;
+    --gray4: #1C1C1E;
+  }
+
+  body {
+    background: radial-gradient(ellipse at center, #1a1a2e 0%, #0d0d0d 100%);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, sans-serif;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 40px 20px 60px;
+  }
+
+  /* ===== PHONE SHELL ===== */
+  .phone {
+    width: 375px;
+    height: 812px;
+    background: linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 50%, #111 100%);
+    border-radius: 54px;
+    position: relative;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.08),
+      0 0 0 3px #1a1a1a,
+      0 0 0 4px rgba(255,255,255,0.04),
+      inset 0 0 0 1px rgba(255,255,255,0.06),
+      0 40px 120px rgba(0,0,0,0.9),
+      0 0 80px rgba(0,122,255,0.08);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  /* Side buttons */
+  .phone::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: 140px;
+    width: 4px;
+    height: 36px;
+    background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
+    border-radius: 3px 0 0 3px;
+    box-shadow: 0 50px 0 rgba(255,255,255,0.05), 0 100px 0 rgba(255,255,255,0.05);
+  }
+  .phone::after {
+    content: '';
+    position: absolute;
+    right: -4px;
+    top: 180px;
+    width: 4px;
+    height: 70px;
+    background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
+    border-radius: 0 3px 3px 0;
+  }
+
+  /* Screen area */
+  .screen {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #000;
+    border-radius: 54px;
+    overflow: hidden;
+  }
+
+  /* Dynamic Island */
+  .dynamic-island {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 36px;
+    background: #000;
+    border-radius: 20px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+  }
+  .dynamic-island .cam-dot {
+    width: 10px; height: 10px;
+    background: #1a1a1a;
+    border-radius: 50%;
+    border: 1px solid #222;
+    position: relative;
+  }
+  .dynamic-island .cam-dot::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 4px; height: 4px;
+    background: #0d1a2a;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0,122,255,0.3);
+  }
+  .dynamic-island .face-id {
+    width: 28px; height: 6px;
+    background: #1a1a1a;
+    border-radius: 3px;
+  }
+
+  /* Status bar */
+  .status-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 60px;
+    z-index: 100;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 24px 10px;
+    justify-content: space-between;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    pointer-events: none;
+  }
+  .status-time { font-size: 16px; font-weight: 700; letter-spacing: -0.5px; }
+  .status-icons { display: flex; gap: 6px; align-items: center; }
+  .status-icons svg { width: 16px; height: 12px; fill: #fff; }
+  .battery {
+    display: flex; align-items: center; gap: 2px;
+    font-size: 12px; font-weight: 600;
+  }
+  .battery-icon {
+    width: 25px; height: 12px;
+    border: 1.5px solid rgba(255,255,255,0.7);
+    border-radius: 3px;
+    padding: 1.5px;
+    position: relative;
+    display: flex; align-items: center;
+  }
+  .battery-icon::after {
+    content: '';
+    position: absolute;
+    right: -5px; top: 50%;
+    transform: translateY(-50%);
+    width: 3px; height: 6px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 0 2px 2px 0;
+  }
+  .battery-fill {
+    height: 100%;
+    width: 80%;
+    background: var(--green);
+    border-radius: 1.5px;
+  }
+
+  /* ===== LAYERS ===== */
+  .layer {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    transition: all 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+    border-radius: 54px;
+    overflow: hidden;
+  }
+  .layer.hidden { opacity: 0; pointer-events: none; transform: scale(0.92); }
+  .layer.slide-up { transform: translateY(100%); opacity: 0; pointer-events: none; }
+
+  /* ===== LOCK SCREEN ===== */
+  #lock-screen {
+    background: linear-gradient(160deg, #0a1628 0%, #0d0d2b 40%, #1a0528 80%, #0a0a0a 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  #lock-screen .lock-time {
+    font-size: 72px;
+    font-weight: 300;
+    color: #fff;
+    letter-spacing: -4px;
+    margin-top: 80px;
+  }
+  #lock-screen .lock-date {
+    font-size: 17px;
+    color: rgba(255,255,255,0.7);
+    font-weight: 400;
+    margin-bottom: 20px;
+  }
+  .lock-bg-blur {
+    position: absolute;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.3;
+  }
+  .lock-bg-blur.b1 { background: #4c7fff; top: 100px; left: -50px; }
+  .lock-bg-blur.b2 { background: #c44dff; bottom: 150px; right: -30px; }
+  .lock-hint {
+    position: absolute;
+    bottom: 100px;
+    color: rgba(255,255,255,0.5);
+    font-size: 13px;
+    text-align: center;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:0.9} }
+
+  /* ===== HOME SCREEN ===== */
+  #home-screen {
+    background: linear-gradient(160deg, #0a1628 0%, #0d1a3a 50%, #1a0a2a 100%);
+    padding-top: 60px;
+  }
+  .home-wallpaper-blur {
+    position: absolute;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    filter: blur(100px);
+    pointer-events: none;
+  }
+  .hw1 { background: rgba(0,100,255,0.25); top: -50px; left: -80px; }
+  .hw2 { background: rgba(180,0,255,0.2); bottom: 50px; right: -80px; }
+  .hw3 { background: rgba(0,200,150,0.15); top: 300px; left: 50px; }
+
+  .home-greeting {
+    text-align: center;
+    color: rgba(255,255,255,0.5);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 0 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* App grid */
+  .app-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px 12px;
+    padding: 0 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .app-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .app-icon:active { transform: scale(0.88); }
+  .app-icon-img {
+    width: 60px; height: 60px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.1) inset;
+  }
+  .app-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.85);
+    font-weight: 500;
+    text-align: center;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  }
+  .app-badge {
+    position: absolute;
+    top: -4px; right: -4px;
+    background: var(--red);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 1px 5px;
+    min-width: 16px;
+    text-align: center;
+    border: 1.5px solid #000;
+  }
+
+  /* Dock */
+  .dock {
+    position: absolute;
+    bottom: 34px;
+    left: 20px; right: 20px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(20px);
+    border-radius: 26px;
+    padding: 14px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border: 1px solid rgba(255,255,255,0.15);
+    z-index: 1;
+  }
+  .dock .app-icon-img { width: 52px; height: 52px; }
+
+  /* ===== GENERIC APP WRAPPER ===== */
+  .app-screen {
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+  }
+  .app-nav {
+    display: flex;
+    align-items: center;
+    padding: 58px 16px 12px;
+    gap: 12px;
+    position: relative;
+    z-index: 10;
+  }
+  .nav-back {
+    width: 34px; height: 34px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .nav-back:active { background: rgba(255,255,255,0.2); }
+  .nav-title { font-size: 17px; font-weight: 600; color: #fff; flex: 1; }
+
+  .app-content { flex: 1; overflow-y: auto; overflow-x: hidden; }
+  .app-content::-webkit-scrollbar { display: none; }
+
+  /* ===== WHATSAPP ===== */
+  #whatsapp { background: #111; }
+  .wa-header {
+    background: #111;
+    padding: 58px 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #222;
+  }
+  .wa-logo { display: flex; align-items: center; gap: 10px; }
+  .wa-logo-icon { font-size: 26px; }
+  .wa-logo-text { font-size: 20px; font-weight: 700; color: #fff; }
+  .wa-actions { display: flex; gap: 14px; }
+  .wa-action-btn { font-size: 20px; cursor: pointer; opacity: 0.8; }
+
+  .wa-search {
+    margin: 10px 16px;
+    background: #222;
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .wa-search input {
+    background: none;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 15px;
+    flex: 1;
+    font-family: inherit;
+  }
+  .wa-search input::placeholder { color: #666; }
+
+  .wa-chat-list { padding-bottom: 80px; }
+  .wa-chat-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .wa-chat-item:active { background: rgba(255,255,255,0.05); }
+  .wa-avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+    background: #2a2a2a;
+    font-weight: 700;
+    color: #fff;
+    font-size: 18px;
+  }
+  .wa-chat-info { flex: 1; min-width: 0; }
+  .wa-chat-name { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 2px; }
+  .wa-chat-msg { font-size: 14px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wa-chat-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .wa-chat-time { font-size: 12px; color: #555; }
+  .wa-unread {
+    background: #25D366;
+    color: #000;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 1px 6px;
+    min-width: 18px;
+    text-align: center;
+  }
+  .wa-divider { height: 1px; background: #1a1a1a; margin: 0 16px 0 80px; }
+
+  /* Chat view */
+  .wa-chat-view { display: flex; flex-direction: column; height: 100%; background: #0a1a0a; }
+  .wa-chat-header {
+    background: #111;
+    padding: 50px 16px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #1a1a1a;
+  }
+  .wa-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .wa-messages::-webkit-scrollbar { display: none; }
+  .wa-msg {
+    max-width: 75%;
+    padding: 8px 12px;
+    border-radius: 18px;
+    font-size: 15px;
+    line-height: 1.4;
+    position: relative;
+  }
+  .wa-msg.sent {
+    background: #005C4B;
+    color: #fff;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+  .wa-msg.recv {
+    background: #1e1e1e;
+    color: #fff;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+  .wa-msg-time { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 3px; text-align: right; }
+  .wa-input-bar {
+    padding: 10px 12px;
+    background: #111;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-top: 1px solid #1a1a1a;
+    padding-bottom: 30px;
+  }
+  .wa-input {
+    flex: 1;
+    background: #222;
+    border-radius: 22px;
+    border: none;
+    outline: none;
+    padding: 10px 16px;
+    color: #fff;
+    font-size: 15px;
+    font-family: inherit;
+  }
+  .wa-send-btn {
+    width: 42px; height: 42px;
+    background: #25D366;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    transition: transform 0.15s;
+    flex-shrink: 0;
+  }
+  .wa-send-btn:active { transform: scale(0.9); }
+  .wa-date-sep {
+    text-align: center;
+    font-size: 12px;
+    color: #555;
+    background: rgba(0,0,0,0.5);
+    padding: 3px 12px;
+    border-radius: 10px;
+    align-self: center;
+    margin: 8px 0;
+  }
+
+  /* ===== INSTAGRAM ===== */
+  #instagram { background: #000; }
+  .ig-header {
+    padding: 58px 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #1a1a1a;
+  }
+  .ig-logo { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.5px; font-style: italic; }
+  .ig-header-icons { display: flex; gap: 16px; }
+  .ig-header-icons span { font-size: 22px; cursor: pointer; }
+
+  .ig-stories {
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+    overflow-x: auto;
+    border-bottom: 1px solid #1a1a1a;
+  }
+  .ig-stories::-webkit-scrollbar { display: none; }
+  .ig-story {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .ig-story-ring {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+    padding: 2.5px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ig-story-ring.seen { background: #333; }
+  .ig-story-avatar {
+    width: 58px; height: 58px;
+    border-radius: 50%;
+    background: #2a2a2a;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    border: 2px solid #000;
+  }
+  .ig-story-name { font-size: 11px; color: rgba(255,255,255,0.8); text-align: center; }
+  .ig-your-story .ig-story-ring { background: #2a2a2a; }
+  .ig-your-story-add {
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 20px; height: 20px;
+    background: #0095F6;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    border: 2px solid #000;
+  }
+
+  .ig-post {
+    border-bottom: 1px solid #1a1a1a;
+    margin-bottom: 4px;
+  }
+  .ig-post-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    gap: 10px;
+  }
+  .ig-post-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: #2a2a2a;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .ig-post-username { font-size: 14px; font-weight: 600; color: #fff; }
+  .ig-post-location { font-size: 12px; color: #aaa; }
+  .ig-post-more { margin-left: auto; font-size: 20px; color: #fff; cursor: pointer; }
+  .ig-post-img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+    font-size: 60px;
+    display: flex; align-items: center; justify-content: center;
+    background: #1a1a1a;
+  }
+  .ig-post-actions {
+    display: flex;
+    padding: 10px 16px;
+    gap: 16px;
+    align-items: center;
+  }
+  .ig-action { font-size: 24px; cursor: pointer; transition: transform 0.2s; }
+  .ig-action:active { transform: scale(1.3); }
+  .ig-action.liked { color: #ED4956; animation: heartbeat 0.3s; }
+  @keyframes heartbeat { 0%{transform:scale(1)} 50%{transform:scale(1.4)} 100%{transform:scale(1)} }
+  .ig-save { margin-left: auto; }
+  .ig-likes { padding: 0 16px 4px; font-size: 14px; color: #fff; font-weight: 600; }
+  .ig-caption { padding: 0 16px 10px; font-size: 14px; color: #fff; }
+  .ig-caption span { font-weight: 700; }
+  .ig-comment-count { padding: 0 16px 10px; font-size: 14px; color: #aaa; cursor: pointer; }
+
+  /* IG Tab bar */
+  .ig-tabbar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.95);
+    border-top: 1px solid #1a1a1a;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0 28px;
+  }
+  .ig-tab { font-size: 24px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; }
+  .ig-tab.active { opacity: 1; }
+
+  /* ===== CAMERA ===== */
+  #camera-app { background: #000; }
+  .cam-viewfinder {
+    position: relative;
+    background: #0a0a0a;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .cam-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+    position: absolute;
+    top: 0; left: 0;
+  }
+  .cam-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    color: rgba(255,255,255,0.3);
+  }
+  .cam-placeholder-icon { font-size: 60px; }
+  .cam-placeholder-text { font-size: 15px; }
+
+  .cam-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .cam-grid-line {
+    position: absolute;
+    background: rgba(255,255,255,0.15);
+  }
+  .cam-grid-h1 { top: 33.33%; left: 0; right: 0; height: 1px; }
+  .cam-grid-h2 { top: 66.66%; left: 0; right: 0; height: 1px; }
+  .cam-grid-v1 { left: 33.33%; top: 0; bottom: 0; width: 1px; }
+  .cam-grid-v2 { left: 66.66%; top: 0; bottom: 0; width: 1px; }
+
+  .cam-focus-ring {
+    position: absolute;
+    width: 70px; height: 70px;
+    border: 2px solid #FFD60A;
+    border-radius: 4px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    transform: translate(-50%, -50%);
+  }
+  .cam-focus-ring.show { opacity: 1; animation: focus-pulse 0.5s forwards; }
+  @keyframes focus-pulse { 0%{transform:translate(-50%,-50%) scale(1.5); opacity:0} 50%{opacity:1; transform:translate(-50%,-50%) scale(1)} 100%{opacity:0.6; transform:translate(-50%,-50%) scale(1)} }
+
+  .cam-modes {
+    position: absolute;
+    bottom: 180px;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+  .cam-mode {
+    color: rgba(255,255,255,0.5);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .cam-mode.active { color: #FFD60A; background: rgba(255,214,10,0.1); }
+
+  .cam-controls {
+    position: absolute;
+    bottom: 40px;
+    left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 30px;
+    padding-bottom: 40px;
+  }
+  .cam-gallery-thumb {
+    width: 52px; height: 52px;
+    border-radius: 10px;
+    background: #1a1a1a;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .cam-shutter {
+    width: 76px; height: 76px;
+    border-radius: 50%;
+    border: 4px solid rgba(255,255,255,0.8);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: transform 0.1s;
+    position: relative;
+  }
+  .cam-shutter:active { transform: scale(0.9); }
+  .cam-shutter-inner {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+  }
+  .cam-flip {
+    width: 52px; height: 52px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+  }
+  .cam-flash {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s;
+    z-index: 999;
+    border-radius: 54px;
+  }
+  .cam-flash.flash { opacity: 1; }
+
+  .cam-top-controls {
+    position: absolute;
+    top: 60px;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 10;
+  }
+  .cam-top-btn {
+    width: 36px; height: 36px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .cam-zoom-bar {
+    position: absolute;
+    bottom: 140px;
+    left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.5);
+    border-radius: 20px;
+    padding: 6px 14px;
+    display: flex;
+    gap: 10px;
+  }
+  .cam-zoom-opt {
+    color: rgba(255,255,255,0.6);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .cam-zoom-opt.active { background: rgba(255,255,255,0.2); color: #FFD60A; }
+
+  .photo-captured {
+    animation: photo-snap 0.3s ease;
+  }
+  @keyframes photo-snap {
+    0% { transform: scale(0) rotate(-5deg); opacity: 0; }
+    60% { transform: scale(1.05) rotate(1deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  /* ===== UBER ===== */
+  #uber-app { background: #000; }
+  .uber-map {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+  .uber-map-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+  .uber-street {
+    position: absolute;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+  }
+  .uber-car {
+    position: absolute;
+    font-size: 24px;
+    transition: all 1.5s ease-in-out;
+    filter: drop-shadow(0 0 8px rgba(0,200,255,0.5));
+    z-index: 10;
+  }
+  .uber-pin {
+    position: absolute;
+    bottom: 40%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 32px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+    animation: pin-bounce 2s infinite;
+    z-index: 10;
+  }
+  @keyframes pin-bounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-8px)} }
+
+  .uber-radius {
+    position: absolute;
+    bottom: 35%;
+    left: 50%;
+    transform: translate(-50%, 50%);
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: rgba(0,120,255,0.1);
+    border: 1px solid rgba(0,120,255,0.3);
+    animation: pulse-ring 2s infinite;
+  }
+  @keyframes pulse-ring { 0%{transform:translate(-50%,50%) scale(0.8); opacity:1} 100%{transform:translate(-50%,50%) scale(1.5); opacity:0} }
+
+  .uber-panel {
+    background: #111;
+    border-radius: 24px 24px 0 0;
+    padding: 20px 20px 40px;
+    position: relative;
+    z-index: 20;
+  }
+  .uber-panel-handle {
+    width: 40px; height: 4px;
+    background: #333;
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+  .uber-panel-title { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 16px; }
+  .uber-where {
+    background: #1a1a1a;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .uber-where-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    gap: 12px;
+    cursor: text;
+  }
+  .uber-where-row + .uber-where-row { border-top: 1px solid #222; }
+  .uber-where-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .uber-where-dot.origin { background: #fff; }
+  .uber-where-dot.dest { background: var(--accent); }
+  .uber-where-input {
+    background: none;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 15px;
+    font-family: inherit;
+    flex: 1;
+    cursor: pointer;
+  }
+  .uber-where-input::placeholder { color: #555; }
+
+  .uber-options { display: flex; gap: 10px; margin-bottom: 16px; overflow-x: auto; }
+  .uber-options::-webkit-scrollbar { display: none; }
+  .uber-option {
+    background: #1a1a1a;
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+    min-width: 90px;
+  }
+  .uber-option.selected { border-color: var(--accent); background: rgba(0,122,255,0.1); }
+  .uber-option-icon { font-size: 26px; }
+  .uber-option-name { font-size: 12px; color: #fff; font-weight: 600; }
+  .uber-option-price { font-size: 12px; color: #aaa; }
+  .uber-option-time { font-size: 11px; color: var(--green); }
+
+  .uber-confirm-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    width: 100%;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.15s, opacity 0.15s;
+  }
+  .uber-confirm-btn:active { transform: scale(0.98); opacity: 0.9; }
+
+  /* Uber ride status */
+  .uber-status { background: #111; padding: 20px; border-radius: 24px 24px 0 0; }
+  .uber-status-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .uber-status-text { font-size: 18px; font-weight: 700; color: #fff; }
+  .uber-status-eta { font-size: 14px; color: var(--green); font-weight: 600; }
+  .uber-driver {
+    display: flex; align-items: center; gap: 12px;
+    background: #1a1a1a; border-radius: 14px; padding: 14px; margin-bottom: 14px;
+  }
+  .uber-driver-avatar { font-size: 36px; }
+  .uber-driver-info { flex: 1; }
+  .uber-driver-name { font-size: 16px; font-weight: 600; color: #fff; }
+  .uber-driver-car { font-size: 13px; color: #aaa; }
+  .uber-driver-rating { color: #FFD60A; font-size: 13px; font-weight: 600; }
+  .uber-driver-actions { display: flex; gap: 10px; }
+  .uber-driver-btn {
+    flex: 1; padding: 12px; border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .uber-driver-btn.call { background: var(--green); color: #fff; }
+  .uber-driver-btn.msg { background: #2a2a2a; color: #fff; }
+  .uber-driver-btn.cancel { background: var(--red); color: #fff; }
+
+  /* ===== IFOOD ===== */
+  #ifood-app { background: #f5f5f5; }
+  .ifood-header {
+    background: linear-gradient(135deg, #EA1D2C, #c41020);
+    padding: 58px 16px 20px;
+    color: #fff;
+  }
+  .ifood-logo { font-size: 26px; font-weight: 900; letter-spacing: -1px; margin-bottom: 12px; }
+  .ifood-address { font-size: 14px; opacity: 0.9; display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+  .ifood-search {
+    background: rgba(255,255,255,0.2);
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.3);
+  }
+  .ifood-search input {
+    background: none;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 15px;
+    flex: 1;
+    font-family: inherit;
+  }
+  .ifood-search input::placeholder { color: rgba(255,255,255,0.6); }
+
+  .ifood-cats {
+    display: flex;
+    gap: 10px;
+    padding: 16px;
+    overflow-x: auto;
+    background: #fff;
+    border-bottom: 1px solid #eee;
+  }
+  .ifood-cats::-webkit-scrollbar { display: none; }
+  .ifood-cat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .ifood-cat-icon {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    background: #f5f5f5;
+  }
+  .ifood-cat-name { font-size: 11px; color: #333; font-weight: 500; }
+
+  .ifood-section { padding: 16px; background: #fff; margin-bottom: 8px; }
+  .ifood-section-title { font-size: 18px; font-weight: 700; color: #222; margin-bottom: 12px; }
+  .ifood-restaurant {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: #fafafa;
+    border-radius: 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: transform 0.15s;
+    border: 1px solid #f0f0f0;
+  }
+  .ifood-restaurant:active { transform: scale(0.98); }
+  .ifood-rest-img {
+    width: 72px; height: 72px;
+    border-radius: 12px;
+    background: #e0e0e0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    flex-shrink: 0;
+  }
+  .ifood-rest-info { flex: 1; }
+  .ifood-rest-name { font-size: 15px; font-weight: 700; color: #222; margin-bottom: 4px; }
+  .ifood-rest-meta { font-size: 12px; color: #666; display: flex; gap: 10px; margin-bottom: 4px; }
+  .ifood-rest-rating { color: #FFD60A; font-weight: 700; }
+  .ifood-rest-tag {
+    display: inline-block;
+    background: #fff3e0;
+    color: #e65100;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid #ffe0b2;
+  }
+
+  /* Ifood Order */
+  .ifood-order-panel {
+    background: #fff;
+    border-radius: 24px 24px 0 0;
+    padding: 20px;
+  }
+  .ifood-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .ifood-item-img { width: 60px; height: 60px; border-radius: 10px; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; }
+  .ifood-item-info { flex: 1; }
+  .ifood-item-name { font-size: 14px; font-weight: 600; color: #222; }
+  .ifood-item-desc { font-size: 12px; color: #888; margin-top: 2px; }
+  .ifood-item-price { font-size: 14px; font-weight: 700; color: #EA1D2C; margin-top: 4px; }
+  .ifood-item-add {
+    background: #EA1D2C;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 32px; height: 32px;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s;
+    flex-shrink: 0;
+  }
+  .ifood-item-add:active { transform: scale(0.85); }
+  .ifood-cart-btn {
+    background: #EA1D2C;
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    width: 100%;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 16px;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .ifood-cart-qty {
+    background: rgba(255,255,255,0.25);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  /* ===== GPS / MAPA ===== */
+  #gps-app { background: #1a1a2e; }
+  .gps-map {
+    flex: 1;
+    position: relative;
+    background: #1a2030;
+    overflow: hidden;
+  }
+  .gps-map-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(rgba(30,50,80,0.5) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(30,50,80,0.5) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .gps-road {
+    position: absolute;
+    background: #2a3550;
+    border-radius: 3px;
+  }
+  .gps-road.main { background: #3a4a6a; }
+  .gps-road.route { background: #0066ff; opacity: 0.8; }
+  .gps-landmark { position: absolute; font-size: 20px; }
+
+  .gps-player {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+  }
+  .gps-player-dot {
+    width: 16px; height: 16px;
+    background: #4488FF;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 6px rgba(68,136,255,0.3);
+    position: relative;
+    z-index: 2;
+  }
+  .gps-player-heading {
+    position: absolute;
+    top: -30px; left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 20px solid rgba(68,136,255,0.5);
+  }
+
+  .gps-panel {
+    background: #0d0d1a;
+    padding: 16px 16px 34px;
+  }
+  .gps-search {
+    background: #1a1a2e;
+    border: 1px solid #2a2a4a;
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex; gap: 10px; align-items: center;
+    margin-bottom: 12px;
+  }
+  .gps-search input {
+    background: none; border: none; outline: none;
+    color: #fff; font-size: 15px; flex: 1; font-family: inherit;
+  }
+  .gps-search input::placeholder { color: #444; }
+
+  .gps-info-cards { display: flex; gap: 10px; margin-bottom: 12px; }
+  .gps-info-card {
+    flex: 1;
+    background: #1a1a2e;
+    border: 1px solid #2a2a4a;
+    border-radius: 12px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .gps-info-value { font-size: 20px; font-weight: 700; color: #fff; }
+  .gps-info-label { font-size: 11px; color: #555; margin-top: 2px; }
+
+  .gps-waypoints { display: flex; gap: 8px; overflow-x: auto; }
+  .gps-waypoints::-webkit-scrollbar { display: none; }
+  .gps-waypoint {
+    background: #1a1a2e;
+    border: 1px solid #2a2a4a;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #aaa;
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex; align-items: center; gap: 6px;
+    transition: border-color 0.2s;
+  }
+  .gps-waypoint.active { border-color: var(--accent); color: var(--accent); }
+  .gps-nav-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #fff; border: none; border-radius: 12px;
+    padding: 14px; font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: inherit; margin-top: 12px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  /* ===== GOOGLE ===== */
+  #google-app { background: #fff; }
+  .google-header {
+    background: #fff;
+    padding: 58px 16px 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .google-logo {
+    font-size: 32px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 14px;
+    letter-spacing: -1px;
+  }
+  .google-logo .g { color: #4285F4; }
+  .google-logo .o1 { color: #EA4335; }
+  .google-logo .o2 { color: #FBBC05; }
+  .google-logo .g2 { color: #4285F4; }
+  .google-logo .l { color: #34A853; }
+  .google-logo .e { color: #EA4335; }
+
+  .google-search-bar {
+    background: #f1f3f4;
+    border-radius: 24px;
+    padding: 12px 18px;
+    display: flex; align-items: center; gap: 10px;
+    border: 1px solid #dadce0;
+  }
+  .google-search-bar input {
+    background: none; border: none; outline: none;
+    font-size: 16px; color: #202124; flex: 1; font-family: inherit;
+  }
+  .google-search-bar input::placeholder { color: #80868b; }
+
+  .google-quick { display: flex; gap: 12px; padding: 16px; overflow-x: auto; border-bottom: 1px solid #f0f0f0; }
+  .google-quick::-webkit-scrollbar { display: none; }
+  .google-quick-item {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    flex-shrink: 0; cursor: pointer;
+  }
+  .google-quick-icon {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    background: #f1f3f4;
+  }
+  .google-quick-label { font-size: 11px; color: #5f6368; }
+
+  .google-result {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+  }
+  .google-result:active { background: #f8f9fa; }
+  .google-result-source { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .google-result-favicon { width: 16px; height: 16px; border-radius: 3px; background: #4285F4; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; }
+  .google-result-domain { font-size: 12px; color: #5f6368; }
+  .google-result-title { font-size: 16px; color: #1a0dab; font-weight: 500; margin-bottom: 4px; line-height: 1.4; }
+  .google-result-desc { font-size: 13px; color: #4d5156; line-height: 1.5; }
+  .google-loading { display: flex; justify-content: center; padding: 30px; }
+  .google-spinner {
+    width: 24px; height: 24px;
+    border: 3px solid #f1f3f4;
+    border-top-color: #4285F4;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===== HOME INDICATOR ===== */
+  .home-indicator {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 130px;
+    height: 5px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 3px;
+    z-index: 1000;
+    cursor: pointer;
+  }
+  #google-app .home-indicator,
+  #ifood-app .home-indicator { background: rgba(0,0,0,0.2); }
+
+  /* ===== NOTIFICATIONS / TOAST ===== */
+  .toast {
+    position: absolute;
+    top: 70px;
+    left: 16px; right: 16px;
+    background: rgba(30,30,30,0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    z-index: 5000;
+    transform: translateY(-100px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast-icon { font-size: 30px; flex-shrink: 0; }
+  .toast-content { flex: 1; }
+  .toast-app { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 600; margin-bottom: 2px; }
+  .toast-msg { font-size: 14px; color: #fff; font-weight: 500; line-height: 1.3; }
+
+  /* Transitions */
+  .layer { transition: all 0.38s cubic-bezier(0.25, 1, 0.5, 1); }
+
+  /* ===== Nexus BRIDGE ===== */
+  .nexus-indicator {
+    position: absolute;
+    top: 70px;
+    right: 16px;
+    background: rgba(0,255,100,0.15);
+    border: 1px solid rgba(0,255,100,0.3);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--green);
+    font-weight: 600;
+    z-index: 200;
+    pointer-events: none;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .nexus-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse-dot 1s infinite; }
+  @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ===== SCROLLABLE CONTENT PADDING ===== */
+  .scroll-pb { padding-bottom: 80px; }
+
+  /* Ripple effect */
+  .ripple { position: relative; overflow: hidden; }
+  .ripple::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    transform: scale(0);
+    animation: ripple-anim 0.4s linear;
+    pointer-events: none;
+  }
+  @keyframes ripple-anim { to { transform: scale(4); opacity: 0; } }
+
+  /* ===== GALLERY (after photo) ===== */
+  .cam-captured-overlay {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    display: none;
+  }
+  .cam-captured-img {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 80px;
+    background: #1a1a1a;
+  }
+  .cam-captured-actions {
+    display: flex;
+    padding: 20px 20px 50px;
+    gap: 12px;
+  }
+  .cam-cap-btn {
+    flex: 1; padding: 14px; border-radius: 12px; border: none;
+    font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .cam-cap-btn.discard { background: #1a1a1a; color: #fff; }
+  .cam-cap-btn.save { background: var(--accent); color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="phone" id="phone">
+  <div class="screen">
+
+    <!-- Dynamic Island -->
+    <div class="dynamic-island" id="dynamicIsland">
+      <div class="cam-dot"></div>
+      <div class="face-id"></div>
+      <div class="cam-dot"></div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="status-time" id="statusTime">9:41</div>
+      <div class="status-icons">
+        <svg viewBox="0 0 17 12"><path d="M8.5 3.5 C10.5 1.5 13 0.5 16 0.5 L16 1.5 C13.5 1.5 11.3 2.3 9.5 4L8.5 3.5Z" opacity="0.5"/><path d="M8.5 3.5 C9.8 2.2 11.8 1.2 14.5 1.2 L14.5 2.2 C12.3 2.2 10.5 3 9.2 4.2L8.5 3.5Z" opacity="0.7"/><path d="M8.5 3.5 C9.5 2.5 11 2 13 2 L13 3 C11.5 3 10.2 3.5 9.2 4.3L8.5 3.5Z"/><circle cx="8.5" cy="11" r="1.5"/></svg>
+        <svg viewBox="0 0 16 12"><rect x="1" y="2" width="10" height="8" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M11 4.5 L14 3.5 L14 8.5 L11 7.5Z" fill="currentColor"/><rect x="2.5" y="3.5" width="7" height="5" rx="1" fill="currentColor"/></svg>
+        <div class="battery">
+          <div class="battery-icon"><div class="battery-fill"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+      <div class="toast-icon" id="toastIcon">📱</div>
+      <div class="toast-content">
+        <div class="toast-app" id="toastApp">Notificação</div>
+        <div class="toast-msg" id="toastMsg">Mensagem recebida</div>
+      </div>
+    </div>
+
+    <!-- Nexus Online indicator -->
+    <div class="nexus-indicator" id="nexusIndicator" style="display:none">
+      <div class="nexus-dot"></div>
+      Nexus Online
+    </div>
+
+    <!-- ============ LOCK SCREEN ============ -->
+    <div class="layer" id="lock-screen" style="z-index:500;cursor:pointer;">
+      <div class="lock-bg-blur b1"></div>
+      <div class="lock-bg-blur b2"></div>
+      <div class="lock-time" id="lockTime">9:41</div>
+      <div class="lock-date" id="lockDate">Sexta-feira, 19 de Junho</div>
+      <div class="lock-hint">🔓 Toque aqui para desbloquear</div>
+      <div style="position:absolute;inset:0;z-index:10;" onclick="unlockPhone()"></div>
+    </div>
+
+    <!-- ============ HOME SCREEN ============ -->
+    <div class="layer hidden" id="home-screen">
+      <div class="home-wallpaper-blur hw1"></div>
+      <div class="home-wallpaper-blur hw2"></div>
+      <div class="home-wallpaper-blur hw3"></div>
+      <div class="home-greeting">Bem-vindo ao Nexus Mobile 📱</div>
+
+      <div class="app-grid">
+        <div class="app-icon" onclick="openApp('whatsapp')">
+          <div class="app-icon-img" style="background:linear-gradient(135deg,#25D366,#128C7E)">💬<div class="app-badge">3</div></div>
+          <div class="app-label">WhatsApp</div>
+        </div>
+        <div class="app-icon" onclick="openApp('instagram')">
+          <div class="app-icon-img" style="background:linear-gradient(135deg,#405DE6,#5851DB,#833AB4,#C13584,#E1306C,#FD1D1D,#F56040,#F77737,#FCAF45,#FFDC80)">📷</div>
+          <div class="app-label">Instagram</div>
+        </div>
+        <div class="app-icon" onclick="openApp('camera')">
+          <div class="app-icon-img" style="background:linear-gradient(135deg,#1c1c1e,#2c2c2e)">📸</div>
+          <div class="app-label">Câmera</div>
+        </div>
+        <div class="app-icon" onclick="openApp('uber')">
+          <div class="app-icon-img" style="background:#000">🚗</div>
+          <div class="app-label">Uber</div>
+        </div>
+        <div class="app-icon" onclick="openApp('ifood')">
+          <div class="app-icon-img" style="background:#EA1D2C">🍔</div>
+          <div class="app-label">iFood</div>
+        </div>
+        <div class="app-icon" onclick="openApp('gps')">
+          <div class="app-icon-img" style="background:linear-gradient(135deg,#1a1a2e,#16213e)">🗺️</div>
+          <div class="app-label">GPS Nexus</div>
+        </div>
+        <div class="app-icon" onclick="openApp('google')">
+          <div class="app-icon-img" style="background:#fff">🔍</div>
+          <div class="app-label">Google</div>
+        </div>
+        <div class="app-icon" onclick="openApp('config')">
+          <div class="app-icon-img" style="background:linear-gradient(135deg,#6e6e73,#3a3a3c)">⚙️</div>
+          <div class="app-label">Ajustes</div>
+        </div>
+      </div>
+
+      <!-- Dock -->
+      <div class="dock">
+        <div class="app-icon" onclick="openApp('whatsapp')">
+          <div class="app-icon-img" style="background:linear-gradient(135deg,#25D366,#128C7E);width:52px;height:52px">💬</div>
+        </div>
+        <div class="app-icon" onclick="openApp('gps')">
+          <div class="app-icon-img" style="background:linear-gradient(135deg,#1a1a2e,#16213e);width:52px;height:52px">🗺️</div>
+        </div>
+        <div class="app-icon" onclick="openApp('camera')">
+          <div class="app-icon-img" style="background:linear-gradient(135deg,#1c1c1e,#2c2c2e);width:52px;height:52px">📸</div>
+        </div>
+        <div class="app-icon" onclick="openApp('google')">
+          <div class="app-icon-img" style="background:#fff;width:52px;height:52px">🔍</div>
+        </div>
+      </div>
+
+      <div class="home-indicator" onclick="goHome()"></div>
+    </div>
+
+    <!-- ============ WHATSAPP ============ -->
+    <div class="layer hidden" id="whatsapp">
+      <div class="app-screen" id="wa-app-screen">
+        <!-- Chat List -->
+        <div id="wa-list-view" style="display:flex;flex-direction:column;height:100%;background:#111">
+          <div class="wa-header">
+            <div class="wa-logo">
+              <div class="wa-logo-icon">💬</div>
+              <div class="wa-logo-text">WhatsApp</div>
+            </div>
+            <div class="wa-actions">
+              <span class="wa-action-btn">📷</span>
+              <span class="wa-action-btn">✏️</span>
+            </div>
+          </div>
+          <div class="wa-search">
+            <span style="color:#666">🔍</span>
+            <input type="text" placeholder="Pesquisar">
+          </div>
+          <div class="app-content">
+            <div class="wa-chat-list">
+              <div class="wa-chat-item" onclick="openChat('Pedro', '🏎️', '#25D366')">
+                <div class="wa-avatar" style="background:#1a3a2a;color:#25D366">P</div>
+                <div class="wa-chat-info">
+                  <div class="wa-chat-name">Pedro Silva</div>
+                  <div class="wa-chat-msg">✔✔ Vai ter treino hoje na pista?</div>
+                </div>
+                <div class="wa-chat-meta">
+                  <div class="wa-chat-time">09:41</div>
+                  <div class="wa-unread">2</div>
+                </div>
+              </div>
+              <div class="wa-divider"></div>
+              <div class="wa-chat-item" onclick="openChat('Ana Costa', '👩', '#FF2D55')">
+                <div class="wa-avatar" style="background:#3a1a2a;color:#FF2D55">A</div>
+                <div class="wa-chat-info">
+                  <div class="wa-chat-name">Ana Costa</div>
+                  <div class="wa-chat-msg">Oi! Tô esperando no spawn. ❤️</div>
+                </div>
+                <div class="wa-chat-meta">
+                  <div class="wa-chat-time">09:38</div>
+                  <div class="wa-unread">1</div>
+                </div>
+              </div>
+              <div class="wa-divider"></div>
+              <div class="wa-chat-item" onclick="openChat('Grupo Nexus', '🎮', '#5856D6')">
+                <div class="wa-avatar" style="background:#1a1a3a;color:#5856D6">G</div>
+                <div class="wa-chat-info">
+                  <div class="wa-chat-name">🎮 Grupo Nexus</div>
+                  <div class="wa-chat-msg">Lucas: Alguém quer fazer missão?</div>
+                </div>
+                <div class="wa-chat-meta">
+                  <div class="wa-chat-time">09:30</div>
+                </div>
+              </div>
+              <div class="wa-divider"></div>
+              <div class="wa-chat-item" onclick="openChat('Marcos', '🚓', '#FF9F0A')">
+                <div class="wa-avatar" style="background:#2a1a0a;color:#FF9F0A">M</div>
+                <div class="wa-chat-info">
+                  <div class="wa-chat-name">Marcos (Polícia)</div>
+                  <div class="wa-chat-msg">✔ Entendido. Chego em 5 min.</div>
+                </div>
+                <div class="wa-chat-meta">
+                  <div class="wa-chat-time">Ontem</div>
+                </div>
+              </div>
+              <div class="wa-divider"></div>
+              <div class="wa-chat-item" onclick="openChat('Bruno', '🏦', '#30D158')">
+                <div class="wa-avatar" style="background:#0a2a1a;color:#30D158">B</div>
+                <div class="wa-chat-info">
+                  <div class="wa-chat-name">Bruno (Banco)</div>
+                  <div class="wa-chat-msg">Saldo: $50,000 💰</div>
+                </div>
+                <div class="wa-chat-meta">
+                  <div class="wa-chat-time">Ontem</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="home-indicator" onclick="goHome()"></div>
+        </div>
+
+        <!-- Chat View (hidden by default) -->
+        <div id="wa-chat-view" class="wa-chat-view" style="display:none">
+          <div class="wa-chat-header">
+            <div class="nav-back" onclick="closeChat()">←</div>
+            <div class="wa-avatar" id="wa-chat-avatar" style="width:40px;height:40px;font-size:20px;background:#1a3a2a;color:#25D366;border-radius:50%">P</div>
+            <div style="flex:1">
+              <div style="font-size:16px;font-weight:600;color:#fff" id="wa-chat-name-display">Pedro Silva</div>
+              <div style="font-size:12px;color:#25D366">online</div>
+            </div>
+            <span style="font-size:20px;cursor:pointer;margin-left:8px">📞</span>
+            <span style="font-size:20px;cursor:pointer;margin-left:12px">⋮</span>
+          </div>
+          <div class="wa-messages" id="wa-messages">
+            <div class="wa-date-sep">Hoje</div>
+            <div class="wa-msg recv">Fala aí! Tudo certo? 👋<div class="wa-msg-time">09:30</div></div>
+            <div class="wa-msg sent">Tudo sim! No servidor agora<div class="wa-msg-time">09:31 ✔✔</div></div>
+            <div class="wa-msg recv">Vai ter treino hoje na pista? 🏎️<div class="wa-msg-time">09:41</div></div>
+          </div>
+          <div class="wa-input-bar">
+            <span style="font-size:20px;cursor:pointer">😊</span>
+            <input class="wa-input" type="text" id="wa-input" placeholder="Mensagem" onkeypress="if(event.key==='Enter')sendWaMsg()">
+            <span style="font-size:20px;cursor:pointer">📎</span>
+            <div class="wa-send-btn" onclick="sendWaMsg()">➤</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ INSTAGRAM ============ -->
+    <div class="layer hidden" id="instagram">
+      <div class="app-screen" style="background:#000">
+        <div class="ig-header">
+          <div class="ig-logo">Instagram</div>
+          <div class="ig-header-icons">
+            <span>❤️</span>
+            <span onclick="showToast('💬','Instagram','Mensagem recebida!')">✈️</span>
+          </div>
+        </div>
+        <div class="app-content">
+          <!-- Stories -->
+          <div class="ig-stories">
+            <div class="ig-story ig-your-story">
+              <div class="ig-story-ring seen" style="position:relative">
+                <div class="ig-story-avatar">🧑</div>
+                <div class="ig-your-story-add">+</div>
+              </div>
+              <div class="ig-story-name">Seu Story</div>
+            </div>
+            <div class="ig-story" onclick="showToast('📸','Instagram','Assistindo story de Pedro!')">
+              <div class="ig-story-ring"><div class="ig-story-avatar">👨</div></div>
+              <div class="ig-story-name">pedro_nexus</div>
+            </div>
+            <div class="ig-story" onclick="showToast('📸','Instagram','Assistindo story de Ana!')">
+              <div class="ig-story-ring"><div class="ig-story-avatar">👩</div></div>
+              <div class="ig-story-name">ana_costa</div>
+            </div>
+            <div class="ig-story" onclick="showToast('📸','Instagram','Assistindo story de Lucas!')">
+              <div class="ig-story-ring"><div class="ig-story-avatar">🧔</div></div>
+              <div class="ig-story-name">lucas_br</div>
+            </div>
+            <div class="ig-story" onclick="showToast('📸','Instagram','Assistindo story!')">
+              <div class="ig-story-ring seen"><div class="ig-story-avatar">👦</div></div>
+              <div class="ig-story-name">marcos99</div>
+            </div>
+          </div>
+
+          <!-- Post 1 -->
+          <div class="ig-post">
+            <div class="ig-post-header">
+              <div class="ig-post-avatar">🧔</div>
+              <div>
+                <div class="ig-post-username">lucas_br</div>
+                <div class="ig-post-location">📍 Los Santos, SA</div>
+              </div>
+              <div class="ig-post-more">···</div>
+            </div>
+            <div class="ig-post-img" id="ig-post-img-1" style="background:linear-gradient(135deg,#1a2a4a,#2a1a4a)">
+              🌆
+            </div>
+            <div class="ig-post-actions">
+              <span class="ig-action" id="ig-like-1" onclick="toggleLike('ig-like-1','ig-likes-1')">🤍</span>
+              <span class="ig-action" onclick="showToast('💬','Instagram','Comentário enviado!')">💬</span>
+              <span class="ig-action" onclick="showToast('📤','Instagram','Post compartilhado!')">↗️</span>
+              <span class="ig-action ig-save" onclick="showToast('🔖','Instagram','Post salvo!')">🔖</span>
+            </div>
+            <div class="ig-likes" id="ig-likes-1">1.284 curtidas</div>
+            <div class="ig-caption"><span>lucas_br</span> Noite em Los Santos 🌃 #Nexus #LS</div>
+            <div class="ig-comment-count" onclick="showToast('💬','Instagram','Comentários!')">Ver todos os 48 comentários</div>
+          </div>
+
+          <!-- Post 2 -->
+          <div class="ig-post">
+            <div class="ig-post-header">
+              <div class="ig-post-avatar">👩</div>
+              <div>
+                <div class="ig-post-username">ana_costa</div>
+                <div class="ig-post-location">📍 Grove Street</div>
+              </div>
+              <div class="ig-post-more">···</div>
+            </div>
+            <div class="ig-post-img" style="background:linear-gradient(135deg,#1a3a1a,#0a2a0a)">
+              🌿
+            </div>
+            <div class="ig-post-actions">
+              <span class="ig-action" id="ig-like-2" onclick="toggleLike('ig-like-2','ig-likes-2')">🤍</span>
+              <span class="ig-action">💬</span>
+              <span class="ig-action">↗️</span>
+              <span class="ig-action ig-save">🔖</span>
+            </div>
+            <div class="ig-likes" id="ig-likes-2">867 curtidas</div>
+            <div class="ig-caption"><span>ana_costa</span> Dias tranquilos 💚 #GroveSt</div>
+          </div>
+          <div style="height:80px"></div>
+        </div>
+
+        <div class="ig-tabbar">
+          <span class="ig-tab active">🏠</span>
+          <span class="ig-tab" onclick="showToast('🔍','Instagram','Explorar!')">🔍</span>
+          <span class="ig-tab" onclick="showToast('➕','Instagram','Nova publicação!')">➕</span>
+          <span class="ig-tab" onclick="showToast('📺','Instagram','Reels!')">▶️</span>
+          <span class="ig-tab">🧑</span>
+        </div>
+        <div class="home-indicator" onclick="goHome()"></div>
+      </div>
+    </div>
+
+    <!-- ============ CAMERA ============ -->
+    <div class="layer hidden" id="camera-app">
+      <div class="app-screen">
+        <div class="cam-viewfinder" id="camViewfinder" onclick="onViewfinderClick(event)">
+          <video class="cam-preview" id="camPreview" autoplay playsinline muted></video>
+          <div class="cam-placeholder" id="camPlaceholder">
+            <div class="cam-placeholder-icon">📷</div>
+            <div class="cam-placeholder-text">Câmera pronta</div>
+          </div>
+          <div class="cam-grid">
+            <div class="cam-grid-line cam-grid-h1"></div>
+            <div class="cam-grid-line cam-grid-h2"></div>
+            <div class="cam-grid-line cam-grid-v1"></div>
+            <div class="cam-grid-line cam-grid-v2"></div>
+          </div>
+          <div class="cam-focus-ring" id="camFocusRing"></div>
+          <div class="cam-top-controls">
+            <div class="cam-top-btn" onclick="goHome()">✕</div>
+            <div class="cam-top-btn" id="camFlashBtn" onclick="toggleFlash()">⚡</div>
+            <div class="cam-top-btn">⊙</div>
+          </div>
+          <div class="cam-zoom-bar">
+            <div class="cam-zoom-opt" onclick="setZoom(this, '0.5×')">0.5×</div>
+            <div class="cam-zoom-opt active" onclick="setZoom(this, '1×')">1×</div>
+            <div class="cam-zoom-opt" onclick="setZoom(this, '2×')">2×</div>
+          </div>
+          <div class="cam-modes">
+            <div class="cam-mode" onclick="setCamMode(this)">VÍDEO</div>
+            <div class="cam-mode active" onclick="setCamMode(this)">FOTO</div>
+            <div class="cam-mode" onclick="setCamMode(this)">RETRATO</div>
+          </div>
+        </div>
+        <div class="cam-controls">
+          <div class="cam-gallery-thumb" id="camThumb" onclick="showCaptured()">🖼️</div>
+          <div class="cam-shutter" onclick="takePhoto()">
+            <div class="cam-shutter-inner"></div>
+          </div>
+          <div class="cam-flip" onclick="showToast('🔄','Câmera','Câmera frontal!')">🔄</div>
+        </div>
+        <div class="cam-flash" id="camFlash"></div>
+
+        <!-- Captured overlay -->
+        <div class="cam-captured-overlay" id="camCaptured">
+          <div style="display:flex;align-items:center;padding:50px 16px 12px;gap:12px;background:#000">
+            <div class="nav-back" onclick="closeCaptured()">✕</div>
+            <div style="color:#fff;font-size:17px;font-weight:600">Foto</div>
+            <div style="margin-left:auto;color:var(--accent);font-size:16px;cursor:pointer" onclick="sharePhoto()">Partilhar</div>
+          </div>
+          <div class="cam-captured-img" id="camCapturedImg">📸</div>
+          <div class="cam-captured-actions">
+            <button class="cam-cap-btn discard" onclick="closeCaptured()">Descartar</button>
+            <button class="cam-cap-btn save" onclick="savePhoto()">Guardar</button>
+          </div>
+        </div>
+      </div>
+      <div class="home-indicator" onclick="goHome()"></div>
+    </div>
+
+    <!-- ============ UBER ============ -->
+    <div class="layer hidden" id="uber-app">
+      <div class="app-screen">
+        <div class="uber-map" id="uberMap">
+          <div class="uber-map-grid"></div>
+          <!-- Streets -->
+          <div class="uber-street main" style="top:30%;left:0;right:0;height:8px"></div>
+          <div class="uber-street main" style="top:55%;left:0;right:0;height:5px"></div>
+          <div class="uber-street main" style="top:70%;left:0;right:0;height:8px"></div>
+          <div class="uber-street main" style="top:0;bottom:0;left:35%;width:5px"></div>
+          <div class="uber-street main" style="top:0;bottom:0;left:65%;width:8px"></div>
+          <div class="uber-street" style="top:15%;left:0;right:0;height:3px"></div>
+          <div class="uber-street" style="top:45%;left:0;right:0;height:3px"></div>
+          <div class="uber-street" style="top:0;bottom:0;left:20%;width:3px"></div>
+          <div class="uber-street" style="top:0;bottom:0;left:80%;width:3px"></div>
+
+          <div class="uber-pin">📍</div>
+          <div class="uber-radius"></div>
+          <div class="uber-car" id="uberCar1" style="top:20%;left:20%;font-size:18px">🚗</div>
+          <div class="uber-car" id="uberCar2" style="top:50%;left:70%;font-size:18px">🚗</div>
+          <div class="uber-car" id="uberCar3" style="top:70%;left:40%;font-size:18px">🚕</div>
+
+          <!-- Nav button on map -->
+          <div class="nav-back" onclick="goHome()" style="position:absolute;top:60px;left:16px;background:rgba(0,0,0,0.7)">←</div>
+        </div>
+
+        <!-- Booking panel -->
+        <div class="uber-panel" id="uberBookPanel">
+          <div class="uber-panel-handle"></div>
+          <div class="uber-panel-title">Para onde? 🚀</div>
+          <div class="uber-where">
+            <div class="uber-where-row">
+              <div class="uber-where-dot origin"></div>
+              <input class="uber-where-input" type="text" value="📍 Sua localização" readonly>
+            </div>
+            <div class="uber-where-row">
+              <div class="uber-where-dot dest"></div>
+              <input class="uber-where-input" type="text" id="uberDest" placeholder="Para onde?" onclick="this.value='Grove Street, Los Santos'">
+            </div>
+          </div>
+          <div class="uber-options">
+            <div class="uber-option selected" onclick="selectUberOption(this,'UberX','R$12','3 min')">
+              <div class="uber-option-icon">🚗</div>
+              <div class="uber-option-name">UberX</div>
+              <div class="uber-option-price">R$12</div>
+              <div class="uber-option-time">3 min</div>
+            </div>
+            <div class="uber-option" onclick="selectUberOption(this,'Comfort','R$18','5 min')">
+              <div class="uber-option-icon">🚙</div>
+              <div class="uber-option-name">Comfort</div>
+              <div class="uber-option-price">R$18</div>
+              <div class="uber-option-time">5 min</div>
+            </div>
+            <div class="uber-option" onclick="selectUberOption(this,'Black','R$35','8 min')">
+              <div class="uber-option-icon">🚘</div>
+              <div class="uber-option-name">Black</div>
+              <div class="uber-option-price">R$35</div>
+              <div class="uber-option-time">8 min</div>
+            </div>
+            <div class="uber-option" onclick="selectUberOption(this,'Moto','R$7','2 min')">
+              <div class="uber-option-icon">🏍️</div>
+              <div class="uber-option-name">Moto</div>
+              <div class="uber-option-price">R$7</div>
+              <div class="uber-option-time">2 min</div>
+            </div>
+          </div>
+          <button class="uber-confirm-btn" onclick="confirmUberRide()">Confirmar <span id="uberOptionName">UberX</span></button>
+        </div>
+
+        <!-- Ride status panel (hidden) -->
+        <div class="uber-panel uber-status" id="uberStatusPanel" style="display:none">
+          <div class="uber-panel-handle"></div>
+          <div class="uber-status-header">
+            <div class="uber-status-text" id="uberStatusText">Motorista a caminho 🚗</div>
+            <div class="uber-status-eta" id="uberETA">3 min</div>
+          </div>
+          <div class="uber-driver">
+            <div class="uber-driver-avatar">👨‍✈️</div>
+            <div class="uber-driver-info">
+              <div class="uber-driver-name">Carlos Mendes</div>
+              <div class="uber-driver-car">Honda Civic • ABC-1234 <div class="uber-driver-rating">⭐ 4.8</div></div>
+            </div>
+          </div>
+          <div class="uber-driver-actions">
+            <button class="uber-driver-btn call" onclick="showToast('📞','Uber','Ligando para Carlos...')">📞 Ligar</button>
+            <button class="uber-driver-btn msg" onclick="showToast('💬','Uber','Mensagem enviada!')">💬 Msg</button>
+            <button class="uber-driver-btn cancel" onclick="cancelRide()">✕ Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ IFOOD ============ -->
+    <div class="layer hidden" id="ifood-app">
+      <div class="app-screen" style="background:#f5f5f5">
+        <div class="ifood-header">
+          <div class="ifood-logo">🍕 iFood</div>
+          <div class="ifood-address">📍 Los Santos, Rua Principal, 123</div>
+          <div class="ifood-search">
+            <span>🔍</span>
+            <input type="text" placeholder="Buscar restaurantes ou pratos..." id="ifoodSearch">
+          </div>
+        </div>
+        <div class="app-content">
+          <div class="ifood-cats">
+            <div class="ifood-cat" onclick="showToast('🍔','iFood','Hambúrgueres!')">
+              <div class="ifood-cat-icon">🍔</div>
+              <div class="ifood-cat-name">Burger</div>
+            </div>
+            <div class="ifood-cat" onclick="showToast('🍕','iFood','Pizzas!')">
+              <div class="ifood-cat-icon">🍕</div>
+              <div class="ifood-cat-name">Pizza</div>
+            </div>
+            <div class="ifood-cat" onclick="showToast('🌮','iFood','Mexicano!')">
+              <div class="ifood-cat-icon">🌮</div>
+              <div class="ifood-cat-name">Mexicano</div>
+            </div>
+            <div class="ifood-cat" onclick="showToast('🍱','iFood','Japonês!')">
+              <div class="ifood-cat-icon">🍱</div>
+              <div class="ifood-cat-name">Japonês</div>
+            </div>
+            <div class="ifood-cat" onclick="showToast('🥗','iFood','Saudável!')">
+              <div class="ifood-cat-icon">🥗</div>
+              <div class="ifood-cat-name">Saudável</div>
+            </div>
+            <div class="ifood-cat" onclick="showToast('🍦','iFood','Sobremesas!')">
+              <div class="ifood-cat-icon">🍦</div>
+              <div class="ifood-cat-name">Sobremesas</div>
+            </div>
+            <div class="ifood-cat" onclick="showToast('🍹','iFood','Bebidas!')">
+              <div class="ifood-cat-icon">🍹</div>
+              <div class="ifood-cat-name">Bebidas</div>
+            </div>
+          </div>
+
+          <div class="ifood-section">
+            <div class="ifood-section-title">🔥 Em destaque</div>
+            <div class="ifood-restaurant" onclick="openIfoodRestaurant('Big Burger LS')">
+              <div class="ifood-rest-img">🍔</div>
+              <div class="ifood-rest-info">
+                <div class="ifood-rest-name">Big Burger LS</div>
+                <div class="ifood-rest-meta">
+                  <span class="ifood-rest-rating">⭐ 4.8</span>
+                  <span>30-40 min</span>
+                  <span>Grátis</span>
+                </div>
+                <div class="ifood-rest-tag">🔥 Mais pedido</div>
+              </div>
+            </div>
+            <div class="ifood-restaurant" onclick="openIfoodRestaurant('Pizza Santos')">
+              <div class="ifood-rest-img">🍕</div>
+              <div class="ifood-rest-info">
+                <div class="ifood-rest-name">Pizza Santos</div>
+                <div class="ifood-rest-meta">
+                  <span class="ifood-rest-rating">⭐ 4.6</span>
+                  <span>25-35 min</span>
+                  <span>Grátis</span>
+                </div>
+                <div class="ifood-rest-tag">⚡ Super rápido</div>
+              </div>
+            </div>
+            <div class="ifood-restaurant" onclick="openIfoodRestaurant('Sushi Tokyo')">
+              <div class="ifood-rest-img">🍱</div>
+              <div class="ifood-rest-info">
+                <div class="ifood-rest-name">Sushi Tokyo</div>
+                <div class="ifood-rest-meta">
+                  <span class="ifood-rest-rating">⭐ 4.9</span>
+                  <span>40-55 min</span>
+                  <span>R$5</span>
+                </div>
+                <div class="ifood-rest-tag">🏆 Top avaliado</div>
+              </div>
+            </div>
+          </div>
+          <div style="height:20px"></div>
+        </div>
+
+        <!-- Restaurant order view (hidden) -->
+        <div id="ifood-order-view" style="display:none;position:absolute;inset:0;background:#f5f5f5;overflow-y:auto">
+          <div style="background:linear-gradient(135deg,#EA1D2C,#c41020);padding:50px 16px 20px">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+              <div class="nav-back" onclick="closeIfoodOrder()" style="background:rgba(255,255,255,0.2)">←</div>
+              <div style="color:#fff;font-size:20px;font-weight:700" id="ifoodRestName">Big Burger LS</div>
+            </div>
+            <div style="display:flex;gap:16px;color:rgba(255,255,255,0.8);font-size:13px">
+              <span>⭐ 4.8</span><span>30-40 min</span><span>📍 2.3 km</span>
+            </div>
+          </div>
+          <div class="ifood-order-panel">
+            <div style="font-size:18px;font-weight:700;color:#222;margin-bottom:16px">🍔 Destaques</div>
+            <div class="ifood-menu-item">
+              <div class="ifood-item-img">🍔</div>
+              <div class="ifood-item-info">
+                <div class="ifood-item-name">X-Burgão Especial</div>
+                <div class="ifood-item-desc">200g de carne, queijo, bacon, alface, tomate</div>
+                <div class="ifood-item-price">R$ 28,90</div>
+              </div>
+              <button class="ifood-item-add" onclick="addToCart('X-Burgão Especial', 28.90)">+</button>
+            </div>
+            <div class="ifood-menu-item">
+              <div class="ifood-item-img">🍟</div>
+              <div class="ifood-item-info">
+                <div class="ifood-item-name">Batata Frita G</div>
+                <div class="ifood-item-desc">Crocante e temperada com ervas</div>
+                <div class="ifood-item-price">R$ 14,90</div>
+              </div>
+              <button class="ifood-item-add" onclick="addToCart('Batata Frita G', 14.90)">+</button>
+            </div>
+            <div class="ifood-menu-item">
+              <div class="ifood-item-img">🥤</div>
+              <div class="ifood-item-info">
+                <div class="ifood-item-name">Refrigerante 600ml</div>
+                <div class="ifood-item-desc">Coca, Guaraná ou Suco</div>
+                <div class="ifood-item-price">R$ 8,90</div>
+              </div>
+              <button class="ifood-item-add" onclick="addToCart('Refrigerante', 8.90)">+</button>
+            </div>
+            <div class="ifood-menu-item">
+              <div class="ifood-item-img">🍦</div>
+              <div class="ifood-item-info">
+                <div class="ifood-item-name">Sorvete de Nutella</div>
+                <div class="ifood-item-desc">3 bolas com cobertura especial</div>
+                <div class="ifood-item-price">R$ 18,90</div>
+              </div>
+              <button class="ifood-item-add" onclick="addToCart('Sorvete de Nutella', 18.90)">+</button>
+            </div>
+            <button class="ifood-cart-btn" id="ifoodCartBtn" onclick="confirmOrder()" style="display:none">
+              <span class="ifood-cart-qty" id="ifoodCartQty">0</span>
+              Ver sacola
+              <span id="ifoodCartTotal">R$0</span>
+            </button>
+          </div>
+        </div>
+        <div class="home-indicator" onclick="goHome()" style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.2)"></div>
+      </div>
+    </div>
+
+    <!-- ============ GPS Nexus ============ -->
+    <div class="layer hidden" id="gps-app">
+      <div class="app-screen">
+        <div class="gps-map" id="gpsMap">
+          <div class="gps-map-bg"></div>
+          <!-- Roads -->
+          <div class="gps-road main" style="top:25%;left:0;right:0;height:10px"></div>
+          <div class="gps-road main" style="top:50%;left:0;right:0;height:8px"></div>
+          <div class="gps-road main" style="top:75%;left:0;right:0;height:10px"></div>
+          <div class="gps-road main" style="top:0;bottom:0;left:25%;width:8px"></div>
+          <div class="gps-road main" style="top:0;bottom:0;left:50%;width:10px"></div>
+          <div class="gps-road main" style="top:0;bottom:0;left:75%;width:8px"></div>
+          <div class="gps-road" style="top:38%;left:0;right:0;height:4px"></div>
+          <div class="gps-road" style="top:62%;left:0;right:0;height:4px"></div>
+          <div class="gps-road route" style="top:50%;left:50%;width:25%;height:8px"></div>
+          <div class="gps-road route" style="top:25%;left:75%;width:8px;height:25%;bottom:auto"></div>
+          <!-- Landmarks -->
+          <div class="gps-landmark" style="top:22%;left:10%">🏦</div>
+          <div class="gps-landmark" style="top:48%;left:28%">🏥</div>
+          <div class="gps-landmark" style="top:72%;left:55%">🚓</div>
+          <div class="gps-landmark" style="top:20%;left:55%">🛒</div>
+          <div class="gps-landmark" style="top:72%;left:80%">✈️</div>
+          <div class="gps-landmark" style="top:40%;left:70%">🏨</div>
+          <div class="gps-player">
+            <div class="gps-player-heading"></div>
+            <div class="gps-player-dot"></div>
+          </div>
+          <div class="nav-back" onclick="goHome()" style="position:absolute;top:60px;left:16px;background:rgba(0,0,0,0.7)">←</div>
+          <!-- Destination marker -->
+          <div id="gpsDestMarker" style="position:absolute;top:22%;left:72%;font-size:24px;display:none">🎯</div>
+        </div>
+
+        <div class="gps-panel">
+          <div class="gps-search">
+            <span style="color:#444">🔍</span>
+            <input type="text" placeholder="Buscar ponto no mapa Nexus..." id="gpsSearchInput">
+            <span style="color:#444;cursor:pointer" onclick="gpsSearch()">→</span>
+          </div>
+          <div class="gps-info-cards">
+            <div class="gps-info-card">
+              <div class="gps-info-value" id="gpsSpeed">0</div>
+              <div class="gps-info-label">km/h</div>
+            </div>
+            <div class="gps-info-card">
+              <div class="gps-info-value" id="gpsDist">--</div>
+              <div class="gps-info-label">km restante</div>
+            </div>
+            <div class="gps-info-card">
+              <div class="gps-info-value" id="gpsETA">--</div>
+              <div class="gps-info-label">min chegada</div>
+            </div>
+          </div>
+          <div class="gps-waypoints">
+            <div class="gps-waypoint active" onclick="setGpsWaypoint(this,'Banco','🏦',5,8)">🏦 Banco</div>
+            <div class="gps-waypoint" onclick="setGpsWaypoint(this,'Hospital','🏥',3,5)">🏥 Hospital</div>
+            <div class="gps-waypoint" onclick="setGpsWaypoint(this,'Delegacia','🚓',8,12)">🚓 Delegacia</div>
+            <div class="gps-waypoint" onclick="setGpsWaypoint(this,'Aeroporto','✈️',12,20)">✈️ Aeroporto</div>
+            <div class="gps-waypoint" onclick="setGpsWaypoint(this,'Shopping','🛒',4,6)">🛒 Shopping</div>
+          </div>
+          <button class="gps-nav-btn" id="gpsNavBtn" onclick="startGpsNav()">
+            <span>🧭</span> Iniciar Navegação
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ GOOGLE ============ -->
+    <div class="layer hidden" id="google-app">
+      <div class="app-screen" style="background:#fff">
+        <div class="google-header">
+          <div class="google-logo">
+            <span class="g">G</span><span class="o1">o</span><span class="o2">o</span><span class="g2">g</span><span class="l">l</span><span class="e">e</span>
+          </div>
+          <div class="google-search-bar">
+            <span>🔍</span>
+            <input type="text" id="googleInput" placeholder="Pesquisar no Google" onkeypress="if(event.key==='Enter')googleSearch()">
+            <span style="font-size:18px;cursor:pointer" onclick="googleSearch()">🎙️</span>
+          </div>
+        </div>
+        <div class="app-content">
+          <div class="google-quick">
+            <div class="google-quick-item" onclick="googleSearchTerm('Nexus servidor')">
+              <div class="google-quick-icon" style="background:#e8f0fe">🎮</div>
+              <div class="google-quick-label">Nexus</div>
+            </div>
+            <div class="google-quick-item" onclick="googleSearchTerm('Los Santos mapa')">
+              <div class="google-quick-icon" style="background:#fce8e6">🗺️</div>
+              <div class="google-quick-label">Los Santos</div>
+            </div>
+            <div class="google-quick-item" onclick="googleSearchTerm('como ganhar dinheiro Nexus')">
+              <div class="google-quick-icon" style="background:#e6f4ea">💰</div>
+              <div class="google-quick-label">Dinheiro</div>
+            </div>
+            <div class="google-quick-item" onclick="googleSearchTerm('carros Nexus')">
+              <div class="google-quick-icon" style="background:#fef7e0">🚗</div>
+              <div class="google-quick-label">Carros</div>
+            </div>
+            <div class="google-quick-item" onclick="googleSearchTerm('missões Nexus')">
+              <div class="google-quick-icon" style="background:#f3e8fd">🎯</div>
+              <div class="google-quick-label">Missões</div>
+            </div>
+          </div>
+          <div id="googleResults">
+            <div class="google-result" onclick="showToast('🔍','Google','Noticias Nexus!')">
+              <div class="google-result-source"><div class="google-result-favicon">S</div><div class="google-result-domain">nexuswiki.com</div></div>
+              <div class="google-result-title">Guia Completo Nexus 2024 – Tudo sobre Los Santos</div>
+              <div class="google-result-desc">Aprenda tudo sobre San Andreas Multiplayer, desde criar personagens até dominar o servidor.</div>
+            </div>
+            <div class="google-result" onclick="showToast('🔍','Google','Forum Nexus!')">
+              <div class="google-result-source"><div class="google-result-favicon" style="background:#FF6B35">F</div><div class="google-result-domain">forum.nexus.com.br</div></div>
+              <div class="google-result-title">Forum Nexus Brasil – Discussões, scripts e suporte</div>
+              <div class="google-result-desc">O maior fórum brasileiro de Nexus. Scripts, plugins, GameModes e comunidade ativa.</div>
+            </div>
+            <div class="google-result">
+              <div class="google-result-source"><div class="google-result-favicon" style="background:#FF0000">Y</div><div class="google-result-domain">youtube.com</div></div>
+              <div class="google-result-title">Nexus 2024 – Melhores Servidores Brasileiros</div>
+              <div class="google-result-desc">Vídeo sobre os melhores servidores de Nexus do Brasil com mais de 500 players online.</div>
+            </div>
+          </div>
+        </div>
+        <div class="home-indicator" onclick="goHome()" style="background:rgba(0,0,0,0.2)"></div>
+      </div>
+    </div>
+
+    <!-- ============ CONFIG (Settings) ============ -->
+    <div class="layer hidden" id="config">
+      <div class="app-screen" style="background:#f2f2f7">
+        <div style="background:#f2f2f7;padding:58px 16px 16px">
+          <div style="font-size:28px;font-weight:700;color:#000;margin-bottom:16px">Ajustes</div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden">
+            <div style="padding:14px 16px;border-bottom:1px solid #f2f2f7;display:flex;align-items:center;gap:12px">
+              <div style="width:40px;height:40px;background:linear-gradient(135deg,#4285F4,#34A853);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px">🧑</div>
+              <div>
+                <div style="font-size:16px;font-weight:600;color:#000">Player Nexus</div>
+                <div style="font-size:13px;color:#888">Apple ID, iCloud...</div>
+              </div>
+              <span style="margin-left:auto;color:#c7c7cc">›</span>
+            </div>
+          </div>
+        </div>
+        <div class="app-content">
+          <div style="background:#fff;border-radius:14px;margin:0 16px 16px;overflow:hidden">
+            <div style="padding:14px 16px;border-bottom:1px solid #f2f2f7;display:flex;align-items:center;gap:12px;cursor:pointer">
+              <div style="width:30px;height:30px;background:#888;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">✈️</div>
+              <div style="color:#000">Modo avião</div>
+              <div style="margin-left:auto;width:46px;height:26px;background:#30D158;border-radius:13px;padding:2px;display:flex;align-items:center;justify-content:flex-end;cursor:pointer" onclick="this.style.background=this.style.background==='#30D158'?'#e0e0e0':'#30D158'">
+                <div style="width:22px;height:22px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></div>
+              </div>
+            </div>
+            <div style="padding:14px 16px;border-bottom:1px solid #f2f2f7;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="showToast('📶','Ajustes','Wi-Fi conectado: Nexus_Server')">
+              <div style="width:30px;height:30px;background:#007AFF;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">📶</div>
+              <div style="color:#000">Wi-Fi</div>
+              <div style="margin-left:auto;color:#888;font-size:14px">Nexus_Network ›</div>
+            </div>
+            <div style="padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="showToast('🔵','Ajustes','Bluetooth ligado!')">
+              <div style="width:30px;height:30px;background:#007AFF;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">🔵</div>
+              <div style="color:#000">Bluetooth</div>
+              <div style="margin-left:auto;color:#888;font-size:14px">Ligado ›</div>
+            </div>
+          </div>
+          <div style="background:#fff;border-radius:14px;margin:0 16px;overflow:hidden">
+            <div style="padding:14px 16px;border-bottom:1px solid #f2f2f7;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="showToast('🔔','Ajustes','Notificações ativas!')">
+              <div style="width:30px;height:30px;background:#FF3B30;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">🔔</div>
+              <div style="color:#000">Notificações</div>
+              <span style="margin-left:auto;color:#c7c7cc">›</span>
+            </div>
+            <div style="padding:14px 16px;border-bottom:1px solid #f2f2f7;display:flex;align-items:center;gap:12px;cursor:pointer">
+              <div style="width:30px;height:30px;background:#FF9500;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">🔆</div>
+              <div style="color:#000">Tela e Brilho</div>
+              <span style="margin-left:auto;color:#c7c7cc">›</span>
+            </div>
+            <div style="padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="toggleSampConnection()">
+              <div style="width:30px;height:30px;background:#34C759;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">🎮</div>
+              <div style="color:#000">Nexus Connection</div>
+              <div style="margin-left:auto;color:#888;font-size:13px" id="nexusConnStatus">Desconectado</div>
+              <span style="color:#c7c7cc">›</span>
+            </div>
+          </div>
+          <div style="height:60px"></div>
+        </div>
+        <div class="home-indicator" onclick="goHome()" style="background:rgba(0,0,0,0.2)"></div>
+      </div>
+    </div>
+
+    <!-- Home indicator (home screen) -->
+  </div><!-- end screen -->
+</div><!-- end phone -->
+
+<script>
+// ===== STATE =====
+let currentApp = 'lock';
+let uberCart = { items: [], total: 0 };
+let ifoodCart = { items: [], qty: 0, total: 0 };
+let gpsNavigating = false;
+let gpsSpeedInterval = null;
+let uberRideInterval = null;
+let nexusConnected = false;
+let currentWaContact = null;
+let photoCount = 0;
+
+// ===== CLOCK =====
+function updateClock() {
+  const now = new Date();
+  const h = now.getHours().toString().padStart(2,'0');
+  const m = now.getMinutes().toString().padStart(2,'0');
+  const timeStr = `${h}:${m}`;
+  document.getElementById('statusTime').textContent = timeStr;
+  document.getElementById('lockTime').textContent = timeStr;
+  
+  const days = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const d = now.getDay(), day = now.getDate(), month = now.getMonth();
+  document.getElementById('lockDate').textContent = `${days[d]}, ${day} de ${months[month]}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ===== UNLOCK =====
+function unlockPhone() {
+  var lock = document.getElementById('lock-screen');
+  var home = document.getElementById('home-screen');
+  lock.style.display = 'none';
+  home.classList.remove('hidden');
+  home.style.opacity = '0';
+  home.style.transform = 'scale(0.95)';
+  setTimeout(function() {
+    home.style.transition = 'all 0.4s ease';
+    home.style.opacity = '1';
+    home.style.transform = 'scale(1)';
+  }, 10);
+  currentApp = 'home';
+  setTimeout(() => showToast('💬','WhatsApp','Pedro: Vai ter treino hoje na pista? 🏎️'), 1500);
+}
+
+// ===== GO HOME =====
+function goHome() {
+  const apps = ['whatsapp','instagram','camera-app','uber-app','ifood-app','gps-app','google-app','config'];
+  apps.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) { el.classList.add('hidden'); el.classList.remove('slide-up'); }
+  });
+  document.getElementById('home-screen').classList.remove('hidden');
+  currentApp = 'home';
+  stopGpsNav();
+}
+
+// ===== OPEN APP =====
+function openApp(appName) {
+  document.getElementById('home-screen').classList.add('hidden');
+  const appIds = {
+    whatsapp: 'whatsapp',
+    instagram: 'instagram',
+    camera: 'camera-app',
+    uber: 'uber-app',
+    ifood: 'ifood-app',
+    gps: 'gps-app',
+    google: 'google-app',
+    config: 'config'
+  };
+  const id = appIds[appName];
+  if(id) {
+    const el = document.getElementById(id);
+    el.classList.remove('hidden');
+    el.style.transform = 'translateY(40px)';
+    el.style.opacity = '0';
+    requestAnimationFrame(() => {
+      el.style.transition = 'all 0.38s cubic-bezier(0.25, 1, 0.5, 1)';
+      el.style.transform = 'translateY(0)';
+      el.style.opacity = '1';
+    });
+    currentApp = appName;
+    if(appName === 'camera') initCamera();
+    if(appName === 'uber') animateUberCars();
+    if(appName === 'gps') initGps();
+  }
+}
+
+// ===== TOAST =====
+let toastTimer = null;
+function showToast(icon, app, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastIcon').textContent = icon;
+  document.getElementById('toastApp').textContent = app;
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ===== WHATSAPP =====
+function openChat(name, icon, color) {
+  document.getElementById('wa-list-view').style.display = 'none';
+  document.getElementById('wa-chat-view').style.display = 'flex';
+  document.getElementById('wa-chat-name-display').textContent = name;
+  currentWaContact = { name, icon, color };
+  const av = document.getElementById('wa-chat-avatar');
+  av.textContent = name[0];
+  av.style.background = color + '22';
+  av.style.color = color;
+  // Reset messages
+  const msgs = document.getElementById('wa-messages');
+  msgs.innerHTML = `<div class="wa-date-sep">Hoje</div>
+    <div class="wa-msg recv">Oi! Tudo bem? 👋<div class="wa-msg-time">09:30</div></div>
+    <div class="wa-msg sent">Tudo sim! No servidor agora 🎮<div class="wa-msg-time">09:31 ✔✔</div></div>`;
+  // Add context message
+  const ctxMsgs = {
+    'Pedro': 'Vai ter treino hoje na pista? 🏎️',
+    'Ana Costa': 'Oi! Tô esperando no spawn. ❤️',
+    'Grupo Nexus': 'Lucas: Alguém quer fazer missão? 🎯',
+    'Marcos': 'Entendido. Chego em 5 min. 🚓',
+    'Bruno': 'Saldo: $50,000 💰'
+  };
+  const ctx = ctxMsgs[name];
+  if(ctx) {
+    const div = document.createElement('div');
+    div.className = 'wa-msg recv';
+    div.innerHTML = ctx + '<div class="wa-msg-time">09:41</div>';
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+}
+function closeChat() {
+  document.getElementById('wa-list-view').style.display = 'flex';
+  document.getElementById('wa-chat-view').style.display = 'none';
+}
+function sendWaMsg() {
+  const input = document.getElementById('wa-input');
+  const text = input.value.trim();
+  if(!text) return;
+  const msgs = document.getElementById('wa-messages');
+  const now = new Date();
+  const t = `${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
+  const div = document.createElement('div');
+  div.className = 'wa-msg sent photo-captured';
+  div.innerHTML = text + `<div class="wa-msg-time">${t} ✔</div>`;
+  msgs.appendChild(div);
+  input.value = '';
+  msgs.scrollTop = msgs.scrollHeight;
+  // Simulate reply
+  setTimeout(() => {
+    const replies = ['😂 Entendido!', 'Combinado! 🤝', 'Ok, já vou lá 👌', 'Show de bola! 🎮', '👍', 'Perfeito, te vejo lá!'];
+    const reply = replies[Math.floor(Math.random() * replies.length)];
+    const rdiv = document.createElement('div');
+    rdiv.className = 'wa-msg recv';
+    rdiv.innerHTML = reply + `<div class="wa-msg-time">${t}</div>`;
+    msgs.appendChild(rdiv);
+    msgs.scrollTop = msgs.scrollHeight;
+    showToast('💬', 'WhatsApp', currentWaContact?.name + ': ' + reply);
+  }, 1200 + Math.random() * 1000);
+}
+
+// ===== INSTAGRAM =====
+function toggleLike(btnId, likesId) {
+  const btn = document.getElementById(btnId);
+  const likes = document.getElementById(likesId);
+  const isLiked = btn.textContent === '❤️';
+  if(isLiked) {
+    btn.textContent = '🤍';
+    btn.classList.remove('liked');
+  } else {
+    btn.textContent = '❤️';
+    btn.classList.add('liked');
+    showToast('❤️','Instagram','Você curtiu a publicação!');
+  }
+}
+
+// ===== CAMERA =====
+let cameraStream = null;
+let flashEnabled = false;
+function initCamera() {
+  const preview = document.getElementById('camPreview');
+  const placeholder = document.getElementById('camPlaceholder');
+  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+      .then(stream => {
+        cameraStream = stream;
+        preview.srcObject = stream;
+        preview.style.display = 'block';
+        placeholder.style.display = 'none';
+      })
+      .catch(() => { /* use placeholder */ });
+  }
+}
+function onViewfinderClick(e) {
+  const ring = document.getElementById('camFocusRing');
+  const rect = e.currentTarget.getBoundingClientRect();
+  ring.style.left = (e.clientX - rect.left) + 'px';
+  ring.style.top = (e.clientY - rect.top) + 'px';
+  ring.classList.remove('show');
+  void ring.offsetWidth;
+  ring.classList.add('show');
+  setTimeout(() => ring.classList.remove('show'), 1500);
+}
+function toggleFlash() {
+  flashEnabled = !flashEnabled;
+  document.getElementById('camFlashBtn').textContent = flashEnabled ? '⚡' : '🚫';
+  showToast(flashEnabled?'⚡':'🔦','Câmera', flashEnabled ? 'Flash ativado' : 'Flash desativado');
+}
+function setZoom(el, label) {
+  document.querySelectorAll('.cam-zoom-opt').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+}
+function setCamMode(el) {
+  document.querySelectorAll('.cam-mode').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+}
+function takePhoto() {
+  const flash = document.getElementById('camFlash');
+  flash.classList.add('flash');
+  setTimeout(() => flash.classList.remove('flash'), 300);
+  photoCount++;
+  setTimeout(() => {
+    const overlay = document.getElementById('camCaptured');
+    overlay.style.display = 'flex';
+    const emojis = ['🌆','🌃','🏎️','🌊','🌴','🎮','🚗','🌅'];
+    document.getElementById('camCapturedImg').textContent = emojis[Math.floor(Math.random()*emojis.length)];
+  }, 400);
+}
+function closeCaptured() {
+  document.getElementById('camCaptured').style.display = 'none';
+}
+function showCaptured() {
+  if(photoCount > 0) {
+    document.getElementById('camCaptured').style.display = 'flex';
+  } else {
+    showToast('🖼️','Câmera','Nenhuma foto tirada ainda');
+  }
+}
+function savePhoto() {
+  showToast('✅','Câmera','Foto salva na galeria!');
+  document.getElementById('camCaptured').style.display = 'none';
+  // Update thumb
+  const emojis = ['🌆','🌃','🏎️','🌊','🌴','🎮','🚗','🌅'];
+  document.getElementById('camThumb').textContent = emojis[Math.floor(Math.random()*emojis.length)];
+  // Bridge to Nexus
+  nexusBridge('CAMERA_PHOTO_TAKEN', { count: photoCount });
+}
+function sharePhoto() {
+  showToast('📤','Câmera','Compartilhado no Instagram!');
+  document.getElementById('camCaptured').style.display = 'none';
+}
+
+// ===== UBER =====
+let selectedUberOption = { name:'UberX', price:'R$12', time:'3 min' };
+function selectUberOption(el, name, price, time) {
+  document.querySelectorAll('.uber-option').forEach(x => x.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedUberOption = { name, price, time };
+  document.getElementById('uberOptionName').textContent = name;
+}
+function animateUberCars() {
+  const cars = ['uberCar1','uberCar2','uberCar3'];
+  const positions = [
+    [{top:'20%',left:'20%'},{top:'30%',left:'45%'},{top:'45%',left:'30%'},{top:'20%',left:'20%'}],
+    [{top:'50%',left:'70%'},{top:'35%',left:'60%'},{top:'50%',left:'40%'},{top:'65%',left:'70%'}],
+    [{top:'70%',left:'40%'},{top:'55%',left:'55%'},{top:'70%',left:'70%'},{top:'70%',left:'40%'}]
+  ];
+  cars.forEach((id, ci) => {
+    const car = document.getElementById(id);
+    if(!car) return;
+    let pi = 0;
+    const move = () => {
+      pi = (pi+1) % positions[ci].length;
+      car.style.top = positions[ci][pi].top;
+      car.style.left = positions[ci][pi].left;
+      setTimeout(move, 2000 + Math.random()*2000);
+    };
+    setTimeout(move, ci * 800);
+  });
+}
+function confirmUberRide() {
+  const dest = document.getElementById('uberDest').value;
+  if(!dest || dest === 'Para onde?') {
+    document.getElementById('uberDest').value = 'Grove Street, Los Santos';
+  }
+  document.getElementById('uberBookPanel').style.display = 'none';
+  document.getElementById('uberStatusPanel').style.display = 'block';
+  document.getElementById('uberETA').textContent = selectedUberOption.time;
+  showToast('🚗','Uber','Motorista encontrado! Carlos está a caminho.');
+  nexusBridge('UBER_RIDE_REQUESTED', { option: selectedUberOption, dest: document.getElementById('uberDest').value });
+  // Countdown
+  let mins = parseInt(selectedUberOption.time);
+  uberRideInterval = setInterval(() => {
+    if(mins > 0) {
+      mins--;
+      document.getElementById('uberETA').textContent = mins + ' min';
+      if(mins === 0) {
+        clearInterval(uberRideInterval);
+        document.getElementById('uberStatusText').textContent = 'Motorista chegou! 🎉';
+        showToast('✅','Uber','Carlos chegou no ponto!');
+      }
+    }
+  }, 8000);
+}
+function cancelRide() {
+  clearInterval(uberRideInterval);
+  document.getElementById('uberStatusPanel').style.display = 'none';
+  document.getElementById('uberBookPanel').style.display = 'block';
+  showToast('❌','Uber','Corrida cancelada.');
+  nexusBridge('UBER_RIDE_CANCELLED', {});
+}
+
+// ===== IFOOD =====
+function openIfoodRestaurant(name) {
+  document.getElementById('ifoodRestName').textContent = name;
+  document.getElementById('ifood-order-view').style.display = 'block';
+  ifoodCart = { items: [], qty: 0, total: 0 };
+  document.getElementById('ifoodCartBtn').style.display = 'none';
+}
+function closeIfoodOrder() {
+  document.getElementById('ifood-order-view').style.display = 'none';
+}
+function addToCart(item, price) {
+  ifoodCart.qty++;
+  ifoodCart.total += price;
+  ifoodCart.items.push(item);
+  const btn = document.getElementById('ifoodCartBtn');
+  btn.style.display = 'flex';
+  document.getElementById('ifoodCartQty').textContent = ifoodCart.qty;
+  document.getElementById('ifoodCartTotal').textContent = `R$${ifoodCart.total.toFixed(2)}`;
+  showToast('🛒','iFood', item + ' adicionado à sacola!');
+}
+function confirmOrder() {
+  showToast('✅','iFood','Pedido realizado! Chegará em 35-45 min 🛵');
+  document.getElementById('ifood-order-view').style.display = 'none';
+  nexusBridge('IFOOD_ORDER_PLACED', { items: ifoodCart.items, total: ifoodCart.total });
+  setTimeout(() => showToast('🛵','iFood','Seu pedido saiu para entrega!'), 5000);
+}
+
+// ===== GPS =====
+let gpsActiveWaypoint = { name:'Banco', dist:5, eta:8 };
+function initGps() {
+  // Simulate speed fluctuation
+  if(gpsSpeedInterval) clearInterval(gpsSpeedInterval);
+}
+function setGpsWaypoint(el, name, icon, dist, eta) {
+  document.querySelectorAll('.gps-waypoint').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  gpsActiveWaypoint = { name, dist, eta };
+  document.getElementById('gpsDist').textContent = dist;
+  document.getElementById('gpsETA').textContent = eta;
+  document.getElementById('gpsNavBtn').textContent = `🧭 Navegar para ${icon} ${name}`;
+  const marker = document.getElementById('gpsDestMarker');
+  marker.textContent = icon;
+  marker.style.display = 'block';
+  showToast(icon, 'GPS Nexus', `Destino: ${name} — ${dist}km`);
+}
+function gpsSearch() {
+  const q = document.getElementById('gpsSearchInput').value.trim();
+  if(!q) return;
+  showToast('🔍','GPS Nexus',`Buscando "${q}"...`);
+  document.getElementById('gpsDist').textContent = (Math.random()*10+1).toFixed(1);
+  document.getElementById('gpsETA').textContent = Math.floor(Math.random()*20+3);
+}
+function startGpsNav() {
+  if(gpsNavigating) { stopGpsNav(); return; }
+  gpsNavigating = true;
+  document.getElementById('gpsNavBtn').innerHTML = '⏹ Parar Navegação';
+  document.getElementById('gpsNavBtn').style.background = '#FF3B30';
+  showToast('🧭','GPS Nexus',`Navegando para ${gpsActiveWaypoint.name}!`);
+  let speed = 0;
+  let dist = gpsActiveWaypoint.dist;
+  gpsSpeedInterval = setInterval(() => {
+    speed = Math.floor(40 + Math.random()*80);
+    dist = Math.max(0, dist - 0.1);
+    document.getElementById('gpsSpeed').textContent = speed;
+    document.getElementById('gpsDist').textContent = dist.toFixed(1);
+    if(dist <= 0) {
+      stopGpsNav();
+      showToast('🎯','GPS Nexus',`Chegou em ${gpsActiveWaypoint.name}!`);
+      nexusBridge('GPS_ARRIVED', { destination: gpsActiveWaypoint.name });
+    }
+  }, 500);
+  nexusBridge('GPS_NAVIGATION_STARTED', { destination: gpsActiveWaypoint.name, dist: gpsActiveWaypoint.dist });
+}
+function stopGpsNav() {
+  gpsNavigating = false;
+  if(gpsSpeedInterval) clearInterval(gpsSpeedInterval);
+  document.getElementById('gpsSpeed').textContent = '0';
+  const btn = document.getElementById('gpsNavBtn');
+  if(btn) {
+    btn.innerHTML = '🧭 Iniciar Navegação';
+    btn.style.background = '#007AFF';
+  }
+}
+
+// ===== GOOGLE =====
+function googleSearch() {
+  const q = document.getElementById('googleInput').value.trim();
+  if(!q) return;
+  googleSearchTerm(q);
+}
+function googleSearchTerm(term) {
+  document.getElementById('googleInput').value = term;
+  const results = document.getElementById('googleResults');
+  results.innerHTML = '<div class="google-loading"><div class="google-spinner"></div></div>';
+  setTimeout(() => {
+    results.innerHTML = `
+      <div style="padding:10px 16px;font-size:13px;color:#5f6368">Resultados para "${term}"</div>
+      <div class="google-result" onclick="showToast('🔍','Google','Abrindo resultado...')">
+        <div class="google-result-source"><div class="google-result-favicon">W</div><div class="google-result-domain">wikipedia.org</div></div>
+        <div class="google-result-title">${term} – Informações completas e atualizadas</div>
+        <div class="google-result-desc">Saiba tudo sobre ${term}. História, curiosidades, dados e muito mais.</div>
+      </div>
+      <div class="google-result" onclick="showToast('🔍','Google','Abrindo resultado...')">
+        <div class="google-result-source"><div class="google-result-favicon" style="background:#FF6B35">F</div><div class="google-result-domain">forum.nexus.com.br</div></div>
+        <div class="google-result-title">Como fazer ${term} no Nexus – Guia completo 2024</div>
+        <div class="google-result-desc">Tutorial detalhado sobre ${term} no San Andreas Multiplayer com dicas dos melhores jogadores.</div>
+      </div>
+      <div class="google-result" onclick="showToast('📺','Google','Abrindo YouTube...')">
+        <div class="google-result-source"><div class="google-result-favicon" style="background:#FF0000">Y</div><div class="google-result-domain">youtube.com</div></div>
+        <div class="google-result-title">${term} – Vídeo tutorial completo [HD 2024]</div>
+        <div class="google-result-desc">Canal Nexus Brasil apresenta um tutorial completo sobre ${term}. Mais de 50k visualizações.</div>
+      </div>
+      <div class="google-result" onclick="showToast('🔍','Google','Abrindo resultado...')">
+        <div class="google-result-source"><div class="google-result-favicon" style="background:#34A853">G</div><div class="google-result-domain">nexuswiki.com</div></div>
+        <div class="google-result-title">Wiki Nexus: ${term}</div>
+        <div class="google-result-desc">Página oficial da wiki Nexus com informações detalhadas sobre ${term}.</div>
+      </div>
+    `;
+    nexusBridge('GOOGLE_SEARCH', { query: term });
+  }, 800);
+}
+
+// ===== Nexus SETTINGS =====
+function toggleSampConnection() {
+  nexusConnected = !nexusConnected;
+  document.getElementById('nexusConnStatus').textContent = nexusConnected ? 'Conectado ✅' : 'Desconectado';
+  document.getElementById('nexusIndicator').style.display = nexusConnected ? 'flex' : 'none';
+  showToast(nexusConnected?'✅':'❌','Nexus', nexusConnected ? 'Conectado ao servidor!' : 'Desconectado.');
+}
+
+// ===== Nexus BRIDGE =====
+// Interface para integrar com Nexus/MTA GameMode
+const Nexus = {
+  events: {},
+  on(event, callback) { 
+    if(!this.events[event]) this.events[event] = [];
+    this.events[event].push(callback);
+  },
+  emit(event, data) {
+    if(this.events[event]) this.events[event].forEach(cb => cb(data));
+  },
+  // Funções públicas para chamar do Nexus/MTA via JS
+  showNotification(icon, app, msg) { showToast(icon, app, msg); },
+  openApp(name) { openApp(name); },
+  goHome() { goHome(); },
+  setPlayerName(name) { /* update UI */ },
+  triggerUberRide(data) { /* ... */ },
+  receiveWhatsappMessage(contact, msg) {
+    showToast('💬','WhatsApp', contact + ': ' + msg);
+  }
+};
+function nexusBridge(event, data) {
+  // Envia evento para o GameMode via window callback
+  if(window.nexusCallback) {
+    try { window.nexusCallback(JSON.stringify({ event, data, ts: Date.now() })); }
+    catch(e) {}
+  }
+  // Dispatch DOM event (para integração com frameworks)
+  window.dispatchEvent(new CustomEvent('nexusMobile', { detail: { event, data } }));
+  Nexus.emit(event, data);
+  // Console log para debug
+  console.log('[Nexus Mobile]', event, data);
+}
+
+// ===== EXPOSE GLOBAL API =====
+window.NexusMobile = {
+  showNotification: (icon, app, msg) => showToast(icon, app, msg),
+  openApp,
+  goHome,
+  sendWhatsapp: receiveWa,
+  triggerUber: (data) => {
+    openApp('uber');
+    setTimeout(() => confirmUberRide(), 500);
+  },
+  Nexus
+};
+
+function receiveWa(contact, msg) {
+  showToast('💬','WhatsApp', contact + ': ' + msg);
+}
+
+// ===== AUTO NOTIFICATIONS =====
+const notifs = [
+  { delay: 8000, icon:'💬', app:'WhatsApp', msg:'Pedro: Vai treinar hoje? 🏎️' },
+  { delay: 20000, icon:'🚗', app:'Uber', msg:'Motorista próximo — 2 min' },
+  { delay: 35000, icon:'📸', app:'Instagram', msg:'ana_costa curtiu sua foto ❤️' },
+  { delay: 50000, icon:'🍔', app:'iFood', msg:'Seu pedido está a caminho! 🛵' }
+];
+notifs.forEach(n => setTimeout(() => showToast(n.icon, n.app, n.msg), n.delay));
+
+// ===== Nexus INTEGRATION DOCS =====
+/*
+  == INTEGRAÇÃO COM Nexus/MTA ==
+  
+  1. Em Lua (MTA), use triggerClientEvent e executeJavaScript:
+     executeBrowserJavaScript(browser, "window.NexusMobile.showNotification('💬','WhatsApp','Mensagem!')")
+  
+  2. Para capturar eventos do celular no servidor:
+     addEvent("onSampMobileEvent", true)
+     function onBrowserRequest(req, postData) -- captura via URL scheme
+     
+  3. Em Nexus (Pawn), use CallLocalFunction ou TextDraws para abrir o browser:
+     SetPlayerBrowserURL(playerid, "http://yourhost/phone.html")
+  
+  4. A variável window.nexusCallback pode ser definida pelo browser embedder:
+     window.nexusCallback = function(json) { /* handle in native code */ 
+     
+  
+     
+
+</script>
+</body>
+</html>
